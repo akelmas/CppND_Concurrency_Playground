@@ -5,13 +5,19 @@
 #include "os.h"
 #include "vehicle.h"
 
-#define CURRENT_EXAMPLE 10
+#define CURRENT_EXAMPLE 14
+
 
 void print_thread_id_and_core_count();
 void example_task_to_emulate_randomness();
 void example_detach();
 void threadFunctionEven();
 void threadFunctionOdd();
+void printID(int id);
+void printIDAndName(int id, std::string name);
+void printName(std::string name, int waitTime);
+void printNameWithRef(std::string &name, int waitTime);
+
 
 int main()
 {
@@ -148,9 +154,85 @@ int main()
 
     // observe the effect of capturing by reference at an earlier point in time
     f0(); 
-#elif CURRENT_EXAMPLE 10
-    
+#elif CURRENT_EXAMPLE == 10
+    //Starting Threads with Lambdas
+     int id = 0; // Define an integer variable
 
+    // starting a first thread (by reference)
+    auto f0 = [&id]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::cout << "a) ID in Thread (call-by-reference) = " << id << std::endl;
+    };
+    std::thread t1(f0);
+
+    // starting a second thread (by value)
+    std::thread t2([id]() mutable {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::cout << "b) ID in Thread (call-by-value) = " << id << std::endl;
+    });
+
+    // increment and print id in main
+    ++id;
+    std::cout << "c) ID in Main (call-by-value) = " << id << std::endl;
+
+    // wait for threads before returning
+    t1.join();
+    t2.join();
+
+#elif CURRENT_EXAMPLE == 11
+    /*
+    Starting a Thread with Variadic Templates and Member Functions
+    */
+    //Passing Arguments using a Variadic Template
+    int id = 0; // Define an integer variable
+
+    // starting threads using variadic templates
+    std::thread t1(printID, id);
+    std::thread t2(printIDAndName, ++id, "MyString");
+    //std::thread t3(printIDAndName, ++id); // this procudes a compiler error
+
+    // wait for threads before returning
+    t1.join();
+    t2.join();
+    //t3.join();
+#elif CURRENT_EXAMPLE == 12
+        std::string name1 = "MyThread1";
+    std::string name2 = "MyThread2";
+
+    // starting threads using value-copy and move semantics 
+    std::thread t1(printName, name1, 50);
+    std::thread t2(printName, std::move(name2), 100);
+
+    // wait for threads before returning
+    t1.join();
+    t2.join();
+
+    // print name from main
+    std::cout << "Name (from Main) = " << name1 << std::endl;
+    std::cout << "Name (from Main) = " << name2 << std::endl;
+#elif CURRENT_EXAMPLE == 13
+    std::string name("MyThread");
+
+    // starting thread
+    std::thread t(printName, std::ref(name), 50);
+
+    // wait for thread before returning
+    t.join();
+
+    // print name from main
+    name += " (from Main)";
+    std::cout << name << std::endl;
+#elif CURRENT_EXAMPLE ==14
+    // create thread
+    Vehicle v1, v2;
+    std::thread t1 = std::thread(&Vehicle::addID, v1, 1); // call member function on object v
+    std::thread t2 = std::thread(&Vehicle::addID, &v2, 2); // call member function on object v
+    // wait for thread to finish
+    t1.join();
+    t2.join();
+    // print Vehicle id
+    v1.printID();
+    v2.printID();
 
 #endif
     return 0;
@@ -193,4 +275,27 @@ void example_detach()
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(50)); // simulate work
     std::cout << "Finished work in thread (detach example)\n";
+}
+
+void printID(int id)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::cout << "ID = " << id << std::endl;
+    
+}
+
+void printIDAndName(int id, std::string name)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::cout << "ID = " << id << ", name = " << name << std::endl;
+}
+void printName(std::string name, int waitTime)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
+    std::cout << "Name (from Thread) = " << name << std::endl;
+}
+void printNameWithRef(std::string &name, int waitTime)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
+    std::cout << "Name (from Thread) = " << name << std::endl;
 }
