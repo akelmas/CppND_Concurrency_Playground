@@ -12,3 +12,10 @@ void Vehicle::printID()
 {
      std::cout << "Vehicle ID=" << _id << std::endl;
 }
+void Vehicle::setName(std::string name){
+     _name=name;
+}
+void Vehicle::printName()
+{
+     std::cout<< "Vehicle Name="<<_name<<std::endl;
+}

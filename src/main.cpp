@@ -1,11 +1,12 @@
 
 #include <iostream>
 #include <thread>
+#include <vector>
 
 #include "os.h"
 #include "vehicle.h"
 
-#define CURRENT_EXAMPLE 14
+#define CURRENT_EXAMPLE 19
 
 
 void print_thread_id_and_core_count();
@@ -17,6 +18,7 @@ void printID(int id);
 void printIDAndName(int id, std::string name);
 void printName(std::string name, int waitTime);
 void printNameWithRef(std::string &name, int waitTime);
+void printHello();
 
 
 int main()
@@ -223,6 +225,7 @@ int main()
     name += " (from Main)";
     std::cout << name << std::endl;
 #elif CURRENT_EXAMPLE ==14
+    //EXAMPLE: Starting Threads with Member Functions
     // create thread
     Vehicle v1, v2;
     std::thread t1 = std::thread(&Vehicle::addID, v1, 1); // call member function on object v
@@ -233,7 +236,90 @@ int main()
     // print Vehicle id
     v1.printID();
     v2.printID();
+#elif CURRENT_EXAMPLE == 15
+    //EXAMPLE: Passing member functions to threads using shared pointer
+        // create thread
+    std::shared_ptr<Vehicle> v(new Vehicle);
+    std::thread t = std::thread(&Vehicle::addID, v, 1); // call member function on object v
+    
+    // wait for thread to finish
+    t.join();
+    
+    // print Vehicle id
+    v->printID();
 
+#elif CURRENT_EXAMPLE == 16
+
+        // create thread
+    std::shared_ptr<Vehicle> v(new Vehicle);
+    std::thread t = std::thread(&Vehicle::addID, v, 1); // call member function on object v
+    
+    // wait for thread to finish
+    t.join();
+    
+    // print Vehicle id
+    v->printID();
+
+#elif CURRENT_EXAMPLE ==17
+    // create thread
+    std::shared_ptr<Vehicle> v(new Vehicle);
+    std::thread t = std::thread(&Vehicle::setName, v, "Toyota Corolla"); // call member function on object v
+    
+    
+    // wait for thread to finish
+    t.join();
+    
+    // print Vehicle id
+    v->printName();
+
+#elif CURRENT_EXAMPLE ==18
+    // create threads
+    std::vector<std::thread> threads;
+    for (size_t i = 0; i < 50; ++i)
+    {
+        // copying thread objects causes a compile error
+        /*
+        std::thread t(printHello);
+        threads.push_back(t); 
+        */
+
+        // moving thread objects will work
+        threads.emplace_back(std::thread(printHello));
+    }
+
+    // do something in main()
+    std::cout << "Hello from Main thread #" << std::this_thread::get_id() << std::endl;
+
+    // call join on all thread objects using a range-based loop
+    for (auto &t : threads)
+        t.join();
+#elif CURRENT_EXAMPLE == 19
+
+//EXAMPLE: A first Cuncurrency Bug
+    // create threads
+    std::vector<std::thread> threads;
+    for (size_t i = 0; i < 10; ++i)
+    {
+        // create new thread from a Lambda
+        threads.emplace_back([i]() {
+
+            // wait for certain amount of time
+            std::this_thread::sleep_for(std::chrono::milliseconds(10 * i));
+
+            // perform work
+            std::cout << "Hello from Worker thread #" << i << std::endl;
+        });
+    }
+
+    // do something in main()
+    std::cout << "Hello from Main thread." << std::endl;
+
+    // call join on all thread objects using a range-based loop
+    for (auto &t : threads)
+        t.join();
+
+
+        
 #endif
     return 0;
 }
@@ -282,6 +368,11 @@ void printID(int id)
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     std::cout << "ID = " << id << std::endl;
     
+}
+void printHello()
+{
+    // perform work
+    std::cout << "Hello from Worker thread #" << std::this_thread::get_id() << std::endl;
 }
 
 void printIDAndName(int id, std::string name)
